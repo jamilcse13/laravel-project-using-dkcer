@@ -1,0 +1,47 @@
+version: "3.7"
+services:
+  nginx:
+    image: nginx:1.21.3-alpine
+    container_name: portal_nginx
+    restart: unless-stopped
+    ports:
+        - 880:880
+        - 443:443
+    command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
+    volumes:
+        - ./:/var/www
+        - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+        - ./docker/nginx/logs:/var/log/nginx
+    links:
+        - app
+
+  app:
+    container_name: portal_app
+    build:
+        context: ./docker/php
+        dockerfile: Dockerfile
+    restart: unless-stopped
+    volumes:
+        - ./:/var/www
+        - ./docker/php/www.conf:/usr/local/etc/php.d/www.conf:rw
+        - ./docker/php/php.ini:/usr/local/etc/php/php.ini:rw
+    working_dir: /var/www
+    links:
+        - db
+
+  db:
+    container_name: portal_db
+    image: mysql:8.0.33
+    ports:
+        - 3316:3316
+    volumes:
+      - ./docker/db/mysql:/var/lib/mysql
+    env_file:
+        - "./.env"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_TCP_PORT: ${DB_PORT}
+      MYSQL_UNIX_PORT: ${DB_PORT}

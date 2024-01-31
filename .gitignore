@@ -1,0 +1,9 @@
+/.idea
+docker/nginx/logs
+docker/db/*
+.DS_Store
+docker-compose.yml
+
+/src/vendor
+/src/.env
+.env
